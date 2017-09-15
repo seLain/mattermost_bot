@@ -9,6 +9,8 @@ PLUGINS = [
 ]
 PLUGINS_ONLY_DOC_STRING = False
 
+MATTERMOST_API_VERSION = 3
+
 BOT_URL = 'http://mm.example.com/api/v3'
 BOT_LOGIN = 'bot@example.com'
 BOT_PASSWORD = None
