@@ -15,8 +15,7 @@ class MattermostAPI(object):
         self.url = url
         self.token = ""
         self.initial = None
-        self.default_team_id = None # the first team in API returned value
-        self.teams_channels_ids = None  # struct: {team_id:[channel_id,...], ...}
+        self.team_id = None
         self.ssl_verify = ssl_verify
         if not ssl_verify:
             requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
@@ -55,35 +54,27 @@ class MattermostAPI(object):
 
     def load_initial_data(self):
         self.initial = self.get('/users/initial_load')
-        self.default_team_id = self.initial['teams'][0]['id']
-        self.teams_channels_ids = {}
-        for team in self.initial['teams']:
-            self.teams_channels_ids[team['id']] = []
-            # get all channels belonging to each team
-            for channel in self.get_channels(team['id']):
-                self.teams_channels_ids[team['id']].append(channel['id'])
+        self.team_id = self.initial['teams'][0]['id']
 
     def create_post(self, user_id, channel_id, message, files=None, pid=""):
         create_at = int(time.time() * 1000)
-        team_id = self.get_team_id(channel_id)
         return self.post(
-                    '/teams/%s/channels/%s/posts/create' % (team_id, channel_id),
-                    {
-                        'user_id': user_id,
-                        'channel_id': channel_id,
-                        'message': message,
-                        'create_at': create_at,
-                        'filenames': files or [],
-                        'pending_post_id': user_id + ':' + str(create_at),
-                        'state': "loading",
-                        'parent_id': pid,
-                        'root_id': pid,
-                    })
+            '/teams/%s/channels/%s/posts/create' % (self.team_id, channel_id),
+            {
+                'user_id': user_id,
+                'channel_id': channel_id,
+                'message': message,
+                'create_at': create_at,
+                'filenames': files or [],
+                'pending_post_id': user_id + ':' + str(create_at),
+                'state': "loading",
+                'parent_id': pid,
+                'root_id': pid,
+            })
 
     def update_post(self, message_id, user_id, channel_id, message, files=None, pid=""):
-        team_id = self.get_team_id(channel_id)
         return self.post(
-            '/teams/%s/channels/%s/posts/update' % (team_id, channel_id),
+            '/teams/%s/channels/%s/posts/update' % (self.team_id, channel_id),
             {
                 'id': message_id,
                 'channel_id': channel_id,
@@ -91,21 +82,10 @@ class MattermostAPI(object):
             })
 
     def channel(self, channel_id):
-        team_id = self.get_team_id(channel_id)
-        return self.get('/teams/%s/channels/%s/' % (team_id, channel_id))
+        return self.get('/teams/%s/channels/%s/' % (self.team_id, channel_id))
 
-    def get_channels(self, team_id=None):
-        if team_id is None:
-            team_id = self.default_team_id
-        return self.get('/teams/%s/channels/' % team_id)
-
-    def get_team_id(self, channel_id):
-
-        for team_id, channels in self.teams_channels_ids.items():
-            if channel_id in channels:
-                return team_id
-
-        return None
+    def get_channels(self):
+        return self.get('/teams/%s/channels/' % self.team_id)
 
     def get_profiles(self, pagination_size=100):
         profiles = {}
@@ -113,13 +93,13 @@ class MattermostAPI(object):
         end = start + pagination_size
 
         current_page = self.get('/teams/%s/users/0/%s'
-                                % (self.default_team_id, pagination_size))
+                                % (self.team_id, pagination_size))
         profiles.update(current_page)
         while len(current_page.keys()) == pagination_size:
             start = end
             end += pagination_size
             current_page = self.get('/teams/%s/users/%s/%s'
-                                    % (self.default_team_id, start, end))
+                                    % (self.team_id, start, end))
             profiles.update(current_page)
         return profiles
 
@@ -130,11 +110,11 @@ class MattermostAPI(object):
         return self.get_profiles()[user_id]
 
     def hooks_list(self):
-        return self.get('/teams/%s/hooks/incoming/list' % self.default_team_id)
+        return self.get('/teams/%s/hooks/incoming/list' % self.team_id)
 
     def hooks_create(self, **kwargs):
         return self.post(
-            '/teams/%s/hooks/incoming/create' % self.default_team_id, kwargs)
+            '/teams/%s/hooks/incoming/create' % self.team_id, kwargs)
 
     @staticmethod
     def in_webhook(url, channel, text, username=None, as_user=None,
