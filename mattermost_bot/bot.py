@@ -49,16 +49,17 @@ class PluginsManager(object):
         'listen_to': {}
     }
 
-    def __init__(self):
-        pass
+    def __init__(self, plugins=[]):
+        self.plugins = plugins
 
     def init_plugins(self):
-        if hasattr(settings, 'PLUGINS'):
-            plugins = settings.PLUGINS
-        else:
-            plugins = 'mattermost_bot.plugins'
+        if self.plugins == []:
+            if hasattr(settings, 'PLUGINS'):
+                self.plugins = settings.PLUGINS
+            else:
+                self.plugins = 'mattermost_bot.plugins'
 
-        for plugin in plugins:
+        for plugin in self.plugins:
             self._load_plugins(plugin)
 
     @staticmethod
