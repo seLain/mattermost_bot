@@ -193,3 +193,44 @@ PLUGINS = [
 If you are migrating from `Slack` to the `Mattermost`, and previously you are used `SlackBot`,
 you can use this battery without any problem. On most cases your plugins will be working properly
 if you are used standard API or with minimal modifications.
+
+## Add Local Settings and Plugins
+
+If you would like to do settings and import local plugins without alter mattermost_bot.settings in Python site-packages, you can simply create a `local_settings.py` in your developement dir, and a `plugins` directory.
+
+The `local_settings.py` looks like this :
+
+```python
+PLUGINS = [
+    'plugins'
+]
+
+BOT_URL = 'http://mm.example.com/api/v3'
+BOT_LOGIN = 'bot@example.com'
+BOT_PASSWORD = None
+BOT_TEAM = 'devops'
+SSL_VERIFY = True
+```
+
+Then you can create your own Bot class and overwrite `__init__()` constructor :
+
+```python
+from mattermost_bot.bot import Bot, PluginsManager
+from mattermost_bot.mattermost import MattermostClient
+from mattermost_bot.dispatcher import MessageDispatcher
+import local_settings
+
+class LocalBot(Bot):
+
+    def __init__(self):
+        self._client = MattermostClient(
+            local_settings.BOT_URL, local_settings.BOT_TEAM,
+            local_settings.BOT_LOGIN, local_settings.BOT_PASSWORD,
+            local_settings.SSL_VERIFY
+            )
+        self._plugins = PluginsManager(local_settings.PLUGINS)
+        self._dispatcher = MessageDispatcher(self._client, self._plugins)
+
+if __name__ == "__main__":
+    LocalBot().run()
+```
