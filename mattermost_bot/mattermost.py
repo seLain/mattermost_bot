@@ -188,7 +188,7 @@ class MattermostClient(object):
                     else ssl.CERT_NONE
             })
 
-    def messages(self, ignore_own_msg=False, filter_action=None):
+    def messages(self, ignore_own_msg=False, filter_actions=[]):
         if not self.connect_websocket():
             return
         while True:
@@ -201,15 +201,21 @@ class MattermostClient(object):
             if data:
                 try:
                     post = json.loads(data)
-                    if filter_action and post.get('event') != filter_action:
+                    event_action = post.get('event')
+                    if event_action not in filter_actions:
                         continue
 
-                    if post.get('data', {}).get('post'):
-                        dp = json.loads(post['data']['post'])
-                        if ignore_own_msg is True and dp.get("user_id"):
-                            if self.user["id"] == dp["user_id"]:
-                                continue
-                    yield post
+                    if event_action == 'posted':
+                        if post.get('data', {}).get('post'):
+                            dp = json.loads(post['data']['post'])
+                            if ignore_own_msg is True and dp.get("user_id"):
+                                if self.user["id"] == dp["user_id"]:
+                                    continue
+                        yield post
+                    elif event_action in ['added_to_team', 'leave_team',
+                                          'user_added', 'user_removed']:
+                        self.api.load_initial_data()  # reload teams & channels
+
                 except ValueError:
                     pass
 
