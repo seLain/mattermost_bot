@@ -46,14 +46,20 @@ class MessageDispatcher(object):
         return self._client.user['id'] in mentions
 
     def is_personal(self, msg):
-        channel_id = msg['data']['post']['channel_id']
-        if channel_id in self._channel_info:
-            channel_type = self._channel_info[channel_id]
-        else:
-            channel = self._client.api.channel(channel_id)
-            channel_type = channel['channel']['type']
-            self._channel_info[channel_id] = channel_type
-        return channel_type == 'D'
+
+        try:
+            channel_id = msg['data']['post']['channel_id']
+            if channel_id in self._channel_info:
+                channel_type = self._channel_info[channel_id]
+            else:
+                channel = self._client.api.channel(channel_id)
+                channel_type = channel['channel']['type']
+                self._channel_info[channel_id] = channel_type
+            return channel_type == 'D'
+        except KeyError as err:
+            logger.info('Once time workpool exception caused by \
+                         bot [added to/leave] [team/channel].')
+            return False
 
     def dispatch_msg(self, msg):
         category = msg[0]
@@ -111,9 +117,12 @@ class MessageDispatcher(object):
                 self.event['data']['mentions'])
 
     def loop(self):
-        for self.event in self._client.messages(True, 'posted'):
-            self.load_json()
-            self._on_new_message(self.event)
+        for self.event in self._client.messages(True, 
+                                        ['posted', 'added_to_team', 'leave_team', \
+                                         'user_added', 'user_removed']):
+            if self.event:
+                self.load_json()
+                self._on_new_message(self.event)
 
     def _default_reply(self, msg):
         if settings.DEFAULT_REPLY:
