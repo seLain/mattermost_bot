@@ -37,16 +37,14 @@ class MessageDispatcher(object):
 
     def ignore(self, _msg):
         msg = self.get_message(_msg)
-        for prefix in settings.IGNORE_NOTIFIES:
-            if msg.startswith(prefix):
-                return True
+        if any(item in msg for item in settings.IGNORE_NOTIFIES):
+            return True
 
     def is_mentioned(self, msg):
         mentions = msg.get('data', {}).get('mentions', [])
         return self._client.user['id'] in mentions
 
     def is_personal(self, msg):
-
         try:
             channel_id = msg['data']['post']['channel_id']
             if channel_id in self._channel_info:
@@ -130,14 +128,25 @@ class MessageDispatcher(object):
                 msg['data']['post']['channel_id'], settings.DEFAULT_REPLY)
 
         default_reply = [
-            u'Bad command "%s", You can ask me one of the '
-            u'following questions:\n' % self.get_message(msg),
+            u'Bad command "%s", Here is what I currently know '
+            u'how to do:\n' % self.get_message(msg),
         ]
-        docs_fmt = u'{1}' if settings.PLUGINS_ONLY_DOC_STRING else u'`{0}` {1}'
 
-        default_reply += [
-            docs_fmt.format(p.pattern, v.__doc__ or "")
-            for p, v in iteritems(self._plugins.commands['respond_to'])]
+        # create dictionary organizing commands by plugin
+        modules = {}
+        for p, v in iteritems(self._plugins.commands['respond_to']):
+            key = v.__module__.title().split('.')[1]
+            if not key in modules:
+                modules[key] = [] 
+            modules[key].append((p.pattern,v.__doc__))
+        
+        docs_fmt = u'\t{1}' if settings.PLUGINS_ONLY_DOC_STRING else u'\t`{0}` - {1}'
+
+        for module,commands in modules.items():
+            default_reply += [u'Plugin: **{}**'.format(module)]
+            commands.sort(key=lambda x: x[0])
+            for pattern,description in commands:
+                default_reply += [docs_fmt.format(pattern,description)]
 
         self._client.channel_msg(
             msg['data']['post']['channel_id'], '\n'.join(default_reply))
@@ -156,6 +165,7 @@ class Message(object):
         self._pool = pool
 
     def get_user_info(self, key, user_id=None):
+        channel_id = self._body['data']['post']['channel_id']
         if key == 'username':
             sender_name = self._get_sender_name()
             if sender_name:
@@ -163,7 +173,7 @@ class Message(object):
 
         user_id = user_id or self._body['data']['post']['user_id']
         if not Message.users or user_id not in Message.users:
-            Message.users = self._client.get_users()
+            Message.users = self._client.get_users(channel_id)
         return Message.users[user_id].get(key)
 
     def get_username(self, user_id=None):
@@ -272,3 +282,4 @@ class Message(object):
     @property
     def body(self):
         return self._body
+        
