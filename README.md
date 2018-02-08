@@ -49,3 +49,26 @@ if __name__ == "__main__":
     LocalBot().run()
 ```
 
+example for APIv4:
+
+```python
+from mattermost_bot.bot import Bot, PluginsManager
+from mattermost_bot.mattermost_v4 import MattermostClientv4
+from mattermost_bot.dispatcher import MessageDispatcher
+import local_settings
+
+class LocalBot(Bot):
+
+    def __init__(self):
+        self._client = MattermostClientv4(
+            local_settings.BOT_URL, local_settings.BOT_TEAM,
+            local_settings.BOT_LOGIN, local_settings.BOT_PASSWORD,
+            local_settings.SSL_VERIFY
+            )
+        self._plugins = PluginsManager(local_settings.PLUGINS)
+        self._dispatcher = MessageDispatcher(self._client, self._plugins)
+
+if __name__ == "__main__":
+    LocalBot().run()
+```
+
