@@ -35,6 +35,7 @@ class MessageDispatcher(object):
     def get_message(msg):
         return msg.get('data', {}).get('post', {}).get('message', '').strip()
 
+    # to see if this message containts item specifies in settings.IGNORE_NOTIFIES
     def ignore(self, _msg):
         msg = self.get_message(_msg)
         if any(item in msg for item in settings.IGNORE_NOTIFIES):

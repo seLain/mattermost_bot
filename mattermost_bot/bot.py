@@ -44,7 +44,7 @@ class Bot(object):
 
     def _keep_active(self):
         logger.info('keep active thread started')
-        while True:
+        while True: # send ping single every 60 sec to avoid server disconnection
             time.sleep(60)
             self._client.ping()
 

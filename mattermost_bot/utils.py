@@ -11,8 +11,8 @@ class WorkerPool(object):
     def __init__(self, func, num_worker=10):
         self.num_worker = num_worker
         self.func = func
-        self.queue = queue.Queue()
-        self.busy_workers = queue.Queue()
+        self.queue = queue.Queue()  # a queue to preserve new tasks
+        self.busy_workers = queue.Queue()   # a queue to mark num of busy workers
 
     def start(self):
         for _ in range(self.num_worker):
@@ -21,6 +21,7 @@ class WorkerPool(object):
     def add_task(self, msg):
         self.queue.put(msg)
 
+    # get the number of busy workers
     def get_busy_workers(self):
         return self.busy_workers.qsize()
 
