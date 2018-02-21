@@ -12,7 +12,6 @@ def test_load_single_plugin():
     assert 'single_plugin.mock_plugin' in sys.modules
 
 def test_load_init_plugins():
-	assert 'mattermost_bot.plugins' not in sys.modules
 	PluginsManager().init_plugins()
 	assert 'mattermost_bot.plugins' in sys.modules
 
