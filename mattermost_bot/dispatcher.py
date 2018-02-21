@@ -264,6 +264,7 @@ class Message(object):
     def comment(self, message):
         self.react(message)
 
+    # This method parses all the plugins available and return the Docs in each of them
     def docs_reply(self, docs_format='    • `{0}` {1}'):
         reply = [docs_format.format(v.__name__, v.__doc__ or "")
                  for p, v in iteritems(self._plugins.commands['respond_to'])]
