@@ -81,3 +81,9 @@ def test_bot_reply_to_message_multiple_decorators(driver):
     driver.wait_for_bot_channel_message('hello!', tosender=False)
     driver.send_direct_message('hello_decorators')
     driver.wait_for_bot_direct_message('hello!')
+
+def test_bot_reply_to_private_channel_message(driver):
+    driver.send_private_channel_message('hello')
+    driver.wait_for_bot_private_channel_message('hello sender!')
+    driver.send_private_channel_message('hello', colon=False)
+    driver.wait_for_bot_private_channel_message('hello sender!')

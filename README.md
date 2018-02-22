@@ -15,6 +15,7 @@ You will need a MatterMost server to run test cases.
  * Create two user accounts for bot to login, ex. `driverbot` and `testbot`
  * Create a team, ex. `test-team`, and add `driverbot` and `testbot` into the team
  * Make sure the default public channel `off-topic` exists
+ * Create a private channel (ex. `Test`) in team `test-team`, and add `driverbot` and `testbot` into the private channel
 
 Install `PyTest` in development environment.
 
@@ -36,6 +37,7 @@ BOT_NAME = 'driverbot'
 BOT_PASSWORD = 'password'
 BOT_TEAM = 'test-team'	# this team name should be the same as in bot_settings
 BOT_CHANNEL = 'off-topic' # default public channel name
+BOT_PRIVATE_CHANNEL = 'test' # a private channel in BOT_TEAM
 SSL_VERIFY = True
 ```
 
@@ -49,6 +51,7 @@ BOT_NAME = 'testbot'
 BOT_PASSWORD = 'password'
 BOT_TEAM = 'test-team'	# this team name should be the same as in driver_settings
 BOT_CHANNEL = 'off-topic'	# default public channel name
+BOT_PRIVATE_CHANNEL = 'test' # a private channel in BOT_TEAM
 SSL_VERIFY = True
 ```
 

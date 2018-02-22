@@ -33,6 +33,8 @@ class Driver(object):
 		self.team_name = driver_settings.BOT_TEAM
 		self.cm_name = driver_settings.BOT_CHANNEL
 		self.cm_chan = None # common public channel
+		self.gm_name = driver_settings.BOT_PRIVATE_CHANNEL
+		self.gm_chan = None	# private channel
 		self.events = []
 		self._events_lock = threading.Lock()
 	
@@ -41,6 +43,7 @@ class Driver(object):
 		self._retrieve_bot_user_ids()
 		self._create_dm_channel()
 		self._retrieve_cm_channel()
+		self._retrieve_gm_channel()
 	
 	def _rtm_connect(self):
 		self.bot._client.connect_websocket()
@@ -88,6 +91,11 @@ class Driver(object):
 		"""create direct channel and get id"""
 		response = self.bot._client.api.get('/teams/name/%s/channels/name/%s' % (self.team_name, self.cm_name))
 		self.cm_chan = response['id']
+
+	def _retrieve_gm_channel(self):
+		"""create direct channel and get id"""
+		response = self.bot._client.api.get('/teams/name/%s/channels/name/%s' % (self.team_name, self.gm_name))
+		self.gm_chan = response['id']
 
 	def _format_message(self, msg, tobot=True, colon=True, space=True):
 		colon = ':' if colon else ''
@@ -154,6 +162,12 @@ class Driver(object):
 
 	def wait_for_bot_channel_message(self, match, tosender=True):
 		self._wait_for_bot_message(self.cm_chan, match, tosender=tosender)
+
+	def send_private_channel_message(self, msg, **kwargs):
+		self._send_channel_message(self.gm_chan, msg, **kwargs)
+
+	def wait_for_bot_private_channel_message(self, match, tosender=True):
+		self._wait_for_bot_message(self.gm_chan, match, tosender=tosender)
 
 	def wait_for_bot_online(self):
 		self._wait_for_bot_presense(True)
