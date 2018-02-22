@@ -1,4 +1,4 @@
-import time
+import time, re
 
 from mattermost_bot.bot import Bot, PluginsManager
 from mattermost_bot.mattermost_v4 import MattermostClientv4
@@ -26,10 +26,14 @@ class Driver(object):
 		self.testbot_username = bot_settings.BOT_NAME
 		self.testbot_userid = None
 		self.dm_chan = None	# direct message channel
+		self.team_name = driver_settings.BOT_TEAM
+		self.cm_name = driver_settings.BOT_CHANNEL
+		self.cm_chan = None # common public channel
 
 	def start(self):
 		self._retrieve_bot_user_ids()
 		self._create_dm_channel()
+		self._retrieve_cm_channel()
 
 	def _retrieve_bot_user_ids(self):
 		# get bot user info
@@ -47,6 +51,11 @@ class Driver(object):
 		response = self.bot._client.api.post('/channels/direct', 
 						[self.bot_userid, self.testbot_userid])
 		self.dm_chan = response['id']
+
+	def _retrieve_cm_channel(self):
+		"""create direct channel and get id"""
+		response = self.bot._client.api.get('/teams/name/%s/channels/name/%s' % (self.team_name, self.cm_name))
+		self.cm_chan = response['id']
 
 	def _format_message(self, msg, tobot=True, colon=True, space=True):
 		colon = ':' if colon else ''
@@ -66,7 +75,22 @@ class Driver(object):
 	def validate_bot_direct_message(self, match):
 		posts = self.bot._client.api.get('/channels/%s/posts' % self.dm_chan)
 		last_response = posts['posts'][posts['order'][0]]
-		if match == last_response['message']:
+		if re.search(match, last_response['message']):
+			return
+		else:
+			raise AssertionError('expected to get message like "{}", but got nothing'.format(match))
+
+	def _send_channel_message(self, chan, msg, **kwargs):
+		msg = self._format_message(msg, **kwargs)
+		self._send_message_to_bot(chan, msg)
+
+	def send_channel_message(self, msg, **kwargs):
+		self._send_channel_message(self.cm_chan, msg, **kwargs)
+
+	def validate_bot_channel_message(self, match):
+		posts = self.bot._client.api.get('/channels/%s/posts' % self.cm_chan)
+		last_response = posts['posts'][posts['order'][0]]
+		if re.search(match, last_response['message']):
 			return
 		else:
 			raise AssertionError('expected to get message like "{}", but got nothing'.format(match))
