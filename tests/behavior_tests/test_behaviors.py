@@ -33,30 +33,21 @@ def test_bot_get_online(driver):
 
 def test_bot_respond_to_simple_message(driver):
     driver.send_direct_message('hello')
-    time.sleep(WAIT_SECS) # sleep and wait test bot to respond
-    driver.validate_bot_direct_message('hello sender!')
-    time.sleep(WAIT_SECS) # sleep to avoid interference from next test case
+    driver.wait_for_bot_direct_message('hello sender!')
 
 def test_bot_respond_to_simple_message_with_formatting(driver):
     driver.send_direct_message('hello_formatting')
-    time.sleep(WAIT_SECS) # sleep and wait test bot to respond
-    driver.validate_bot_direct_message('_hello_ sender!')
-    time.sleep(WAIT_SECS) # sleep to avoid interference from next test case
+    driver.wait_for_bot_direct_message('_hello_ sender!')
 
 def test_bot_respond_to_simple_message_case_insensitive(driver):
     driver.send_direct_message('hEllO')
-    time.sleep(WAIT_SECS) # sleep and wait test bot to respond
-    driver.validate_bot_direct_message('hello sender!')
-    time.sleep(WAIT_SECS) # sleep to avoid interference from next test case
+    driver.wait_for_bot_direct_message('hello sender!')
 
 def test_bot_direct_message_with_at_prefix(driver):
     driver.send_direct_message('hello', tobot=True)
-    time.sleep(WAIT_SECS) # sleep and wait test bot to respond
-    driver.validate_bot_direct_message('hello sender!')
+    driver.wait_for_bot_direct_message('hello sender!')
     driver.send_direct_message('hello', tobot=True, colon=False)
-    time.sleep(WAIT_SECS) # sleep and wait test bot to respond
-    driver.validate_bot_direct_message('hello sender!')
-    time.sleep(WAIT_SECS) # sleep to avoid interference from next test case
+    driver.wait_for_bot_direct_message('hello sender!')
 
 # [ToDo] Implement this test together with the file upload function
 def test_bot_upload_file(driver):
@@ -71,21 +62,14 @@ def test_bot_upload_file_from_link(driver):
 
 def test_bot_reply_to_channel_message(driver):
     driver.send_channel_message('hello')
-    time.sleep(WAIT_SECS) # sleep and wait test bot to respond
-    driver.validate_bot_channel_message('hello sender!')
+    driver.wait_for_bot_channel_message('hello sender!')
     driver.send_channel_message('hello', colon=False)
-    time.sleep(WAIT_SECS) # sleep and wait test bot to respond
-    driver.validate_bot_channel_message('hello sender!')
+    driver.wait_for_bot_channel_message('hello sender!')
     driver.send_channel_message('hello', space=False)
-    time.sleep(WAIT_SECS) # sleep and wait test bot to respond
-    driver.validate_bot_channel_message('hello sender!')
+    driver.wait_for_bot_channel_message('hello sender!')
     driver.send_channel_message('hello', colon=False, space=False)
-    time.sleep(WAIT_SECS) # sleep and wait test bot to respond
-    driver.validate_bot_channel_message('hello channel!')
-    time.sleep(WAIT_SECS) # sleep to avoid interference from next test case
+    driver.wait_for_bot_channel_message('hello channel!', tosender=False)
 
 def test_bot_listen_to_channel_message(driver):
     driver.send_channel_message('hello', tobot=False)
-    time.sleep(WAIT_SECS) # sleep and wait test bot to respond
-    driver.validate_bot_channel_message('hello channel!')
-    time.sleep(WAIT_SECS) # sleep to avoid interference from next test case
+    driver.wait_for_bot_channel_message('hello channel!', tosender=False)

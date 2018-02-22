@@ -1,9 +1,12 @@
-import time, re
-
+import time, re, six, threading, logging, sys, json
+from six.moves import _thread
 from mattermost_bot.bot import Bot, PluginsManager
 from mattermost_bot.mattermost_v4 import MattermostClientv4
 from mattermost_bot.dispatcher import MessageDispatcher
 import driver_settings, bot_settings
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 class DriverBot(Bot):
 
@@ -16,6 +19,7 @@ class DriverBot(Bot):
         self._plugins = PluginsManager()
         self._plugins.init_plugins()
         self._dispatcher = MessageDispatcher(self._client, self._plugins)
+        
 
 class Driver(object):
 
@@ -29,11 +33,39 @@ class Driver(object):
 		self.team_name = driver_settings.BOT_TEAM
 		self.cm_name = driver_settings.BOT_CHANNEL
 		self.cm_chan = None # common public channel
-
+		self.events = []
+		self._events_lock = threading.Lock()
+	
 	def start(self):
+		self._rtm_connect()
 		self._retrieve_bot_user_ids()
 		self._create_dm_channel()
 		self._retrieve_cm_channel()
+	
+	def _rtm_connect(self):
+		self.bot._client.connect_websocket()
+		self._websocket = self.bot._client.websocket
+		self._websocket.sock.setblocking(0)
+		_thread.start_new_thread(self._rtm_read_forever, tuple())
+
+	def _websocket_safe_read(self):
+		"""Returns data if available, otherwise ''. Newlines indicate multiple messages """
+		data = ''
+		while True:
+			# accumulated received data until no more events received
+			# then exception triggered, then returns the accumulated data
+			try:
+				data += '{0}\n'.format(self._websocket.recv())
+			except:
+				return data.rstrip()
+
+	def _rtm_read_forever(self):
+		while True:
+			json_data = self._websocket_safe_read()
+			if json_data != '':
+				with self._events_lock:
+					self.events.extend([json.loads(d) for d in json_data.split('\n')])
+			time.sleep(1)
 
 	def _retrieve_bot_user_ids(self):
 		# get bot user info
@@ -65,6 +97,7 @@ class Driver(object):
 		return msg
 
 	def _send_message_to_bot(self, channel, msg):
+		self.clear_events()
 		self._start_ts = time.time()
 		self.bot._client.channel_msg(channel, msg)
 
@@ -80,6 +113,30 @@ class Driver(object):
 		else:
 			raise AssertionError('expected to get message like "{}", but got nothing'.format(match))
 
+	def wait_for_bot_direct_message(self, match):
+		self._wait_for_bot_message(self.dm_chan, match, tosender=False)
+
+	def _wait_for_bot_message(self, channel, match, maxwait=10, tosender=True, thread=False):
+		for _ in range(maxwait):
+			time.sleep(1)
+			if self._has_got_message_rtm(channel, match, tosender, thread=thread):
+				break
+		else:
+			raise AssertionError('expected to get message like "{}", but got nothing'.format(match))
+
+	def _has_got_message_rtm(self, channel, match, tosender=True, thread=False):
+		if tosender is True:
+			match = six.text_type(r'@{}: {}').format(self.bot_username, match)
+		with self._events_lock:
+			for event in self.events:
+				if 'event' not in event or (event['event'] == 'posted' and 'data' not in event):
+					print('Unusual event received: ' + repr(event))
+				if event['event'] == 'posted':
+					post_data = json.loads(event['data']['post'])
+					if re.match(match, post_data['message'], re.DOTALL):
+						return True
+			return False
+
 	def _send_channel_message(self, chan, msg, **kwargs):
 		msg = self._format_message(msg, **kwargs)
 		self._send_message_to_bot(chan, msg)
@@ -94,6 +151,9 @@ class Driver(object):
 			return
 		else:
 			raise AssertionError('expected to get message like "{}", but got nothing'.format(match))
+
+	def wait_for_bot_channel_message(self, match, tosender=True):
+		self._wait_for_bot_message(self.cm_chan, match, tosender=tosender)
 
 	def wait_for_bot_online(self):
 		self._wait_for_bot_presense(True)
@@ -114,3 +174,7 @@ class Driver(object):
 	def _is_testbot_online(self):
 		# check by asking MM through API
 		return True
+
+	def clear_events(self):
+		with self._events_lock:
+			self.events = []
