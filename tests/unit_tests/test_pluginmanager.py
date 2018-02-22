@@ -2,7 +2,7 @@ import sys, logging
 import pytest
 from mattermost_bot.bot import PluginsManager
 
-logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+#logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 def test_load_single_plugin():
