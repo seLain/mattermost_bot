@@ -96,3 +96,4 @@ class MattermostClientv4(MattermostClient):
         url = host + '/websocket'
         self._connect_websocket(url, cookie_name='MMAUTHTOKEN')
         return self.websocket.getstatus() == 101
+        

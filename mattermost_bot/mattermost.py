@@ -223,4 +223,3 @@ class MattermostClient(object):
 
     def ping(self):
         self.websocket.ping()
-

@@ -275,3 +275,4 @@ class Message(object):
     @property
     def body(self):
         return self._body
+        
