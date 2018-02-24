@@ -124,4 +124,3 @@ class LocalBot(Bot):
 if __name__ == "__main__":
     LocalBot().run()
 ```
-
