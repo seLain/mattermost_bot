@@ -1,5 +1,3 @@
-## Notice
-
 Please visit [attzonko/mattermost_bot](https://github.com/attzonko/mattermost_bot) if you are searching for stable version of `mattermost_bot` and any furthur support.
 
 ## Branches in this Repository
@@ -120,7 +118,4 @@ class LocalBot(Bot):
             )
         self._plugins = PluginsManager(local_settings.PLUGINS)
         self._dispatcher = MessageDispatcher(self._client, self._plugins)
-
-if __name__ == "__main__":
-    LocalBot().run()
 ```
