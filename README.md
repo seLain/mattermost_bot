@@ -5,7 +5,7 @@ Please visit [attzonko/mattermost_bot](https://github.com/attzonko/mattermost_bo
  * **master** : my version of mattermost_bot.
  * *others* : feature or bug-fix branches
 
-## Running Tests
+## Run the tests
 
 You will need a MatterMost server to run test cases. 
 
