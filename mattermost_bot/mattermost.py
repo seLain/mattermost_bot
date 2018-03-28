@@ -100,6 +100,9 @@ class MattermostAPI(object):
                 'message': message,
             })
 
+    def update_active_status(self, user_id, active):
+        return self.put('/users/%s/active' % user_id, {'active': active})
+
     def channel(self, channel_id):
         channel = {'channel': self.get('/channels/%s' % channel_id)}
         return channel
@@ -232,3 +235,9 @@ class MattermostClient(object):
 
     def ping(self):
         self.websocket.ping()
+
+    def active_account(self):
+        self.api.update_active_status(user_id=self.user["id"], active=True)
+
+    def deactive_account(self):
+        self.api.update_active_status(user_id=self.user["id"], active=False)
