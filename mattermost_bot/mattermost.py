@@ -103,6 +103,9 @@ class MattermostAPI(object):
     def update_active_status(self, user_id, active):
         return self.put('/users/%s/active' % user_id, {'active': active})
 
+    def update_user_status(self, user_id, status):
+        return self.put('/users/%s/status' % user_id, {'status': status})
+
     def channel(self, channel_id):
         channel = {'channel': self.get('/channels/%s' % channel_id)}
         return channel
@@ -241,3 +244,12 @@ class MattermostClient(object):
 
     def deactive_account(self):
         self.api.update_active_status(user_id=self.user["id"], active=False)
+
+    def online(self):
+        self.api.update_user_status(user_id=self.user["id"], status='online')
+
+    def offline(self):
+        self.api.update_user_status(user_id=self.user["id"], status='offline')
+
+    def away(self):
+        self.api.update_user_status(user_id=self.user["id"], status='away')
