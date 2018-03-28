@@ -40,6 +40,14 @@ class MattermostAPI(object):
             verify=self.ssl_verify
         ).text)
 
+    def put(self, request, data=None):
+        return json.loads(requests.put(
+            self.url + request,
+            headers=self._get_headers(),
+            data=json.dumps(data),
+            verify=self.ssl_verify
+        ).text)
+
     def login(self, team, account, password):
         props = {'login_id': account, 'password': password}
         response = requests.post(
