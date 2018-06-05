@@ -1,4 +1,4 @@
-Please visit [attzonko/mattermost_bot](https://github.com/attzonko/mattermost_bot) if you are searching for stable version of `mattermost_bot` and any furthur support.
+Please visit [attzonko/mmpy_bot](https://github.com/attzonko/mmpy_bot) if you are searching for stable version of `mattermost_bot` and any furthur support.
 
 ## Branches in this Repository
 
